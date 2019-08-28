@@ -2,14 +2,27 @@
 #include <SDL2/SDL.h>
 #include <unistd.h>
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 128
+#define SCREEN_WIDTH 500
+#define SCREEN_HEIGHT 500
+
+/*
+ * 贪吃蛇游戏
+ * 需准备：
+ *      背景图
+ *      蛇图片
+ *      食物
+ *
+ *      蛇会一直动,每当吃到食物就会变长
+ *      食物当被吃掉时,会一直变换位置显示
+ *      蛇不能碰到墒
+ */
 
 int main() {
     // 初始化
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         const char *msg = SDL_GetError();
         printf("Initialization failed, error message: %s\n", msg);
+        SDL_Quit();
         exit(-1);
     }
 
@@ -22,8 +35,11 @@ int main() {
     if (window == NULL) {
         const char *msg = SDL_GetError();
         printf("Failed to create window, error message: %s\n", msg);
+        SDL_Quit();
         exit(-1);
     }
+
+    SDL_SetWindowResizable(window, SDL_TRUE);
 
     // 声明渲染器指针
     SDL_Renderer *renderer = NULL;
@@ -34,49 +50,34 @@ int main() {
     if (renderer == NULL) {
         const char *msg = SDL_GetError();
         printf("Failed to create renderer, error message: %s\n", msg);
+        SDL_Quit();
         exit(-1);
     }
 
     // 设置背景色
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255,255);
     // 清空渲染器
     SDL_RenderClear(renderer);
 
-    const char* path = "/home/qinleiyin/Workspace/c/c_sdl_demo/background.bmp";
-    SDL_Surface *surface = SDL_LoadBMP(path);
-    if (surface == NULL) {
-        const char *msg = SDL_GetError();
-        printf("load bmp failed, error message: %s\n", msg);
+    // 设置画笔颜色
+    SDL_SetRenderDrawColor(renderer, 204, 0, 0, 255);
+    // 绘制一个线段
+    int res = SDL_RenderDrawLine(renderer, 50, 50, 300, 300);
+    if (res < 0) {
+        printf("%s\n", " 绘制线段失败!");
+        SDL_Quit();
         exit(-1);
     }
-
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    // free surface
-    SDL_FreeSurface(surface);
-
-    SDL_Rect *src_rect = malloc(sizeof(SDL_Rect));
-    src_rect->x = 0;
-    src_rect->y = 0;
-    src_rect->w = SCREEN_WIDTH;
-    src_rect->h = SCREEN_HEIGHT;
-
-    SDL_Rect *target_rect = malloc(sizeof(SDL_Rect));
-    target_rect->x = 0;
-    target_rect->y = 0;
-    target_rect->w = SCREEN_WIDTH;
-    target_rect->h = SCREEN_HEIGHT;
-
-    // SDL纹理
-    SDL_RenderCopy(renderer, texture, src_rect, target_rect);
-
-    // 显示绘制结果
     SDL_RenderPresent(renderer);
 
-    SDL_Delay(5000);
+    SDL_Event event;
+    while (SDL_WaitEvent(&event)) {
+        if (event.type == SDL_MOUSEBUTTONDOWN) {
+            SDL_Quit();
+            printf("%s\n", "退出");
+        }
+    }
 
-    free(src_rect);
-    free(target_rect);
-    // SDL退出
     SDL_Quit();
     return 0;
 }
