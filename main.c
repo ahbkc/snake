@@ -46,17 +46,22 @@ int eventHandle(void *data) {
     return 0;
 }
 
-void updateWindow(SDL_Window *window, SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *pr, SDL_Rect *nr) {
-    pr->x = 0;
-    pr->y = 0;
-    pr->w = 0;
-    pr->h = 0;
+void updateWindow(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *pr, SDL_Rect *nr) {
+    // 清空渲染器
+    SDL_RenderClear(renderer);
 
-    nr->x = 0;
-    nr->y = 0;
-    pr->w = 0;
-    pr->h = 0;
+    // 刷新位置
+    SDL_RenderCopy(renderer, texture, pr, nr);
 
+    // 刷新显示
+    SDL_RenderPresent(renderer);
+}
+
+// 定时器回调函数
+Uint32 sdl_timer_callback(Uint32 interval, void *param) {
+    printf("interval = %d\n", interval);
+    // 必须要返回一个值, 返回的值即时定时器间隔调用的值
+    return interval;
 }
 
 int main() {
@@ -130,29 +135,44 @@ int main() {
     // 显示绘制结果
     SDL_RenderPresent(renderer);
 
+    // 创建一个定时器
+
+    SDL_TimerID timerId = SDL_AddTimer(1000, sdl_timer_callback, NULL);
+    if (timerId == 0) {
+        const char *msg = SDL_GetError();
+        printf("load bmp failed, error message: %s\n", msg);
+        SDL_Quit();
+        exit(-1);
+    }
+
     SDL_Event event;
     while (SDL_WaitEvent(&event)) {
         if (event.type == SDL_QUIT) {
             // 监听点击右上角叉号退出事件
             SDL_Quit();
         } else if (event.type == SDL_KEYDOWN) {
+            int speed = 10;
             switch (event.key.keysym.sym) {
                 case SDLK_RIGHT:
+                    target_rect->x = target_rect->x + speed;
                     printf("%s\n", "右方向");
                     break;
                 case SDLK_LEFT:
+                    target_rect->x = target_rect->x - speed;
                     printf("%s\n", "左方向");
                     break;
                 case SDLK_UP:
+                    target_rect->y = target_rect->y - speed;
                     printf("%s\n", "上方向");
                     break;
                 case SDLK_DOWN:
+                    target_rect->y = target_rect->y + speed;
                     printf("%s\n", "下方向");
                     break;
                 default:
                     break;
             }
-            updateWindow(window, renderer, texture, src_rect, target_rect);
+            updateWindow(renderer, texture, src_rect, target_rect);
         }
     }
 
