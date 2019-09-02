@@ -17,6 +17,13 @@
  *      蛇不能碰到墒
  */
 
+struct Custom_SDL_Render {
+    SDL_Renderer *renderer;
+    SDL_Texture *texture;
+    SDL_Rect *src_rect;
+    SDL_Rect *target_rect;
+};
+
 // 监听事件线程
 int eventHandle(void *data) {
     SDL_Event event;
@@ -57,9 +64,29 @@ void updateWindow(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *pr, SD
     SDL_RenderPresent(renderer);
 }
 
+static int left_right_count = 0;
+// 0代表左, 1代表右
+static int direction = 0;
+static int speed = 10;
+
 // 定时器回调函数
 Uint32 sdl_timer_callback(Uint32 interval, void *param) {
-    printf("interval = %d\n", interval);
+    struct Custom_SDL_Render *sdlRender = (struct Custom_SDL_Render *) param;
+    SDL_Rect *src_rect = sdlRender->src_rect, *target_rect = sdlRender->target_rect;
+    SDL_Renderer *renderer = sdlRender->renderer;
+    SDL_Texture *texture = sdlRender->texture;
+    if (left_right_count < 10 && direction == 0) {
+        left_right_count++;
+        target_rect->x += speed;
+    } else {
+        left_right_count--;
+        target_rect->x -= speed;
+        direction = 1;
+        if (left_right_count <= 0) {
+            direction = 0;
+        }
+    }
+    updateWindow(renderer, texture, src_rect, target_rect);
     // 必须要返回一个值, 返回的值即时定时器间隔调用的值
     return interval;
 }
@@ -135,9 +162,13 @@ int main() {
     // 显示绘制结果
     SDL_RenderPresent(renderer);
 
+    struct Custom_SDL_Render *customSdlRender = malloc(sizeof(struct Custom_SDL_Render));
+    customSdlRender->renderer = renderer;
+    customSdlRender->texture = texture;
+    customSdlRender->src_rect = src_rect;
+    customSdlRender->target_rect = target_rect;
     // 创建一个定时器
-
-    SDL_TimerID timerId = SDL_AddTimer(1000, sdl_timer_callback, NULL);
+    SDL_TimerID timerId = SDL_AddTimer(1000, sdl_timer_callback, customSdlRender);
     if (timerId == 0) {
         const char *msg = SDL_GetError();
         printf("load bmp failed, error message: %s\n", msg);
@@ -175,9 +206,7 @@ int main() {
             updateWindow(renderer, texture, src_rect, target_rect);
         }
     }
-
-//    SDL_Thread *eventHandleThread = SDL_CreateThread(eventHandle, "eventHandle", NULL);
-//    SDL_WaitThread(eventHandleThread, NULL);
+    free(customSdlRender);
     SDL_Quit();
     return 0;
 }
