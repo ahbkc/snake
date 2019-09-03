@@ -182,7 +182,6 @@ int main() {
             // 监听点击右上角叉号退出事件
             SDL_Quit();
         } else if (event.type == SDL_KEYDOWN) {
-            int speed = 10;
             switch (event.key.keysym.sym) {
                 case SDLK_RIGHT:
                     target_rect->x = target_rect->x + speed;
